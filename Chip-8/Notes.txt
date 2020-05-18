@@ -1,3 +1,47 @@
 
 
 
+
+
+
+CHIP8 specs:
+
+Memory: 
+	Its only 4KB so the max address is 0xfff (4096) and it was divided into these:
+
+	0x000-0x1FF = Interpreter Or the Main CHIP8, should not be used by the application.
+	0x200-0xFFF = Main app program / Data space
+	Note some begin at 0x600 if using ETI 660 computer
+
+
+
+Registers:
+	Chip8 have 16 general purpose 8bit register.  it get refered by the Notation
+	Vx, x = Hex value. 
+	* VA,VB,VC ... VF. 8bit
+	* VF = the flags register, is only used by instruction and not the apps.
+	there is also an 16 bit register called I that is used to store memory addresses, since the maximum address is 0xFFF so only 12bit is used.
+	* I = memAddr, 16 bit and only used the first 12bit
+	There is also two more register used as timers. "delay" and "sound". it get decremented by 60Hz when its non-zero.
+
+	Pseudo-registers. are not accisble by the apps/instruction. such as program counter (PC) 16 bit. 
+	* PC = 16 bit, used as program counter.
+	* SP = 8 bit, used as stack pointer that point to the topmost of the stack. 
+	The stack is an array of 16 16bit values, used to store address across calls. so chip9 can only have 16 levels of nested calls.
+
+Keyboard: 
+	The original chip8 used 16-key character, and it was the hexadecimal keys. 
+	0-9
+	A-F
+	modern emulator have to map keyboard layout to allow better UX.
+
+
+Instructions:
+	All instructions are 2 bytes. stored as Big-Endiann. each instruction must start at even addresse's. if an app have data (Sprites), the next instrcution should be padded to make it aliagn.
+	
+	nnn or addr - A 12-bit value, the lowest 12 bits of the instruction
+	n or nibble - A 4-bit value, the lowest 4 bits of the instruction
+	x - A 4-bit value, the lower 4 bits of the high byte of the instruction		n(x)nn
+	y - A 4-bit value, the upper 4 bits of the low byte of the instruction		nn(y)n
+	kk or byte - An 8-bit value, the lowest 8 bits of the instruction			nn(kk)
+

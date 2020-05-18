@@ -29,5 +29,7 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="Notes.txt" />
+    <Text Include="Instructions.txt" />
+    <Text Include="Display.txt" />
   </ItemGroup>
 </Project>

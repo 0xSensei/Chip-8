@@ -163,6 +163,8 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <Text Include="Display.txt" />
+    <Text Include="Instructions.txt" />
     <Text Include="Notes.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
