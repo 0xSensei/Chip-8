@@ -16,6 +16,7 @@ typedef struct {
 	BYTE va;
 	BYTE vb;
 	BYTE vc;
+	BYTE vd;
 	BYTE ve;
 	BYTE vf;	// Flags
 	WORD I;
@@ -37,11 +38,11 @@ private:
 	WORD stack[16];
 	WORD * sp;
 	Registers registers;
-
+	BYTE key_pressed;
 
 	int ReadRom(const char* RomPath);
 	void main_loop();
-
+	int set_appropriate_register(BYTE choice, BYTE val);
 	// OPCODES
 
 	void cls();
