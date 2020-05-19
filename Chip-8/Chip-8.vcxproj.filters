@@ -43,5 +43,6 @@
     <Text Include="Notes.txt" />
     <Text Include="Instructions.txt" />
     <Text Include="Display.txt" />
+    <Text Include="Todo.txt" />
   </ItemGroup>
 </Project>

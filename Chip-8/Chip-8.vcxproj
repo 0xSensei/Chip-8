@@ -170,6 +170,7 @@
     <Text Include="Display.txt" />
     <Text Include="Instructions.txt" />
     <Text Include="Notes.txt" />
+    <Text Include="Todo.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

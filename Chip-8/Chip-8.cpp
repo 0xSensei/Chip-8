@@ -3,8 +3,15 @@
 
 #include "pch.h"
 #include <iostream>
+#include "cpu.h"
+// Read ROM
+
+
+
 
 int main()
 {
-    
+	CPU cpu("C:\\Users\\Asus\\source\\repos\\Chip-8\\ROMS\\BLITZ");
+
+	
 }
