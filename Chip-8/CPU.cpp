@@ -213,6 +213,16 @@ void CPU::main_loop()
 		case 0xE:
 			// EX9E	Skip the following instruction if the key corresponding to the hex value currently stored in register VX is pressed
 			// EXA1	Skip the following instruction if the key corresponding to the hex value currently stored in register VX is not pressed
+			if (ext_lastTwo(*this->pc) == 0x9E) {
+				if (kb.check_pressed(registers[ext_second(*this->pc)])) {
+					this->pc++; // if pressed it will be pc+4
+				}
+			}
+			else if (ext_lastTwo(*this->pc) == 0xA1) {
+				if (kb.check_released(registers[ext_second(*this->pc)])) {
+					this->pc++; // if pressed it will be pc+4
+				}
+			}
 			break;
 		case 0xF:
 			

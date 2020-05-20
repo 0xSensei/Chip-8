@@ -8,6 +8,7 @@
 * delay timer need to be decremented 
 * sound timers should be effiective too 
 
+* Keyboard is not cross platform
 
 * 			// FX29	Set I to the memory address of the sprite data corresponding to the hexadecimal digit stored in register VX
 
