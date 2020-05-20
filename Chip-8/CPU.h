@@ -42,7 +42,7 @@ private:
 
 	int ReadRom(const char* RomPath);
 	void main_loop();
-	int set_appropriate_register(BYTE choice, BYTE val);
+	int set_appropriate_register(BYTE Vx, BYTE val);
 	// OPCODES
 
 	void cls();
@@ -56,7 +56,7 @@ private:
 
 	void store();
 	
-	void add();
+	int add_val_to_register(BYTE Vx, BYTE val);
 	void sub();
 
 	void _or();
@@ -66,6 +66,7 @@ private:
 
 	void _shift();
 
+	int add_vx_to_I(BYTE Vx);
 
 
 };

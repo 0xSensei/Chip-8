@@ -87,10 +87,10 @@ void CPU::main_loop()
 		{
 		case 0:
 			if (((char*)this->pc)[3] == 0) {
-				cls(); // 00E0	Clear the screen
+				//cls(); // 00E0	Clear the screen
 			}
 			else {
-				ret(); // 00EE	Return from a subroutine
+				//ret(); // 00EE	Return from a subroutine
 			}
 			break;
 		case 1: // Jump absuloute
@@ -105,10 +105,11 @@ void CPU::main_loop()
 			*this->pc = *this->pc & 0x0FFF;
 			continue;
 			break;
-		case 3: // 3XNN	Skip the following instruction if the value of register VX equals NN
+		case 3: // 3XNN	Skip the following instruction if the value of register VX equals 
 		case 4: // 4XNN	Skip the following instruction if the value of register VX is not equal to NN
 		case 5: // 5XY0	Skip the following instruction if the value of register VX is equal to the value of register VY
-			skip();
+			skip(); // will handle all logic
+			continue;
 			break;
 		case 6: 
 			// 6XNN	Store number NN in register VX
@@ -119,12 +120,13 @@ void CPU::main_loop()
 			break;
 		case 7: 
 			// 7XNN	Add the value NN to register VX
-			add();
+			add_val_to_register(ext_second(*this->pc),
+				ext_lastTwo(*this->pc));
 			break;
 		case 8:
 			// 8XY0	Store the value of register VY in register VX
 			if (((char*)this->pc)[3] == 0) {
-				store();
+				//store();
 			}
 			else if (((char*)this->pc)[3] == 1) {
 				// 8XY1	Set VX to VX OR VY
@@ -190,13 +192,17 @@ void CPU::main_loop()
 			// FX0A	Wait for a keypress and store the result in register VX
 			// FX15	Set the delay timer to the value of register VX
 			// FX18	Set the sound timer to the value of register VX
-			// FX1E	Add the value stored in register VX to register I
 			// FX29	Set I to the memory address of the sprite data corresponding to the hexadecimal digit stored in register VX
 			// FX33	Store the binary - coded decimal equivalent of the value stored in register VX at addresses I, I + 1, and I + 2
 			// FX55	Store the values of registers V0 to VX inclusive in memory starting at address I
 			// I is set to I + X + 1 after operation
 			// FX65	Fill registers V0 to VX inclusive with the values stored in memory starting at address I
 			// I is set to I + X + 1 after operation
+
+			// FX1E	Add the value stored in register VX to register I
+			if (ext_lastTwo(*this->pc) == 0x1E) {
+				add_vx_to_I(ext_second(*this->pc));
+			}
 
 			break;
 		default:
@@ -214,9 +220,11 @@ void CPU::main_loop()
 
 }
 
-int CPU::set_appropriate_register(BYTE choice, BYTE val)
+
+
+int CPU::set_appropriate_register(BYTE Vx, BYTE val)
 {
-	switch (choice)
+	switch (Vx)
 	{
 	case 0x00:
 		registers.v0 = val;
@@ -271,50 +279,192 @@ int CPU::set_appropriate_register(BYTE choice, BYTE val)
 	return 0;
 }
 
-void CPU::cls()
-{
-}
-
-void CPU::ret()
-{
-}
-
-void CPU::abs_jmp()
-{
-}
-
-void CPU::call()
-{
-}
-
 void CPU::skip()
 {
+
+			// 3XNN	Skip the following instruction if the value of register VX equals 
+			// 4XNN	Skip the following instruction if the value of register VX is not equal to NN
+			// 5XY0	Skip the following instruction if the value of register VX is equal to the value of register VY
+	BYTE opcode = ext_first(*this->pc);
+	BYTE Vx;
+	BYTE Vy;
+	BYTE val;
+	if (opcode == 0x03) {
+		Vx = ext_second(*this->pc);
+		val = ext_lastTwo(*this->pc);
+		switch (Vx)
+			{
+				case 0x00:
+					registers.v0 += val;
+					break;
+				case 0x01:
+					registers.v1 += val;
+					break;
+				case 0x02:
+					registers.v2 += val;
+					break;
+				case 0x03:
+					registers.v3 += val;
+					break;
+				case 0x04:
+					registers.v4 += val;
+					break;
+				case 0x05:
+					registers.v5 += val;
+					break;
+				case 0x06:
+					registers.v6 += val;
+					break;
+				case 0x07:
+					registers.v7 += val;
+					break;
+				case 0x08:
+					registers.v8 += val;
+					break;
+				case 0x09:
+					registers.v9 += val;
+					break;
+				case 0x0A:
+					registers.va += val;
+					break;
+				case 0x0B:
+					registers.vb += val;
+					break;
+				case 0x0C:
+					registers.vc += val;
+					break;
+				case 0x0D:
+					registers.vd += val;
+					break;
+				case 0x0E:
+					registers.ve += val;
+					break;
+				default:
+			}
+
+	}
+	else if (ext_first(*this->pc) == 0x04) {
+
+	}
+	else if (ext_first(*this->pc) == 0x05) {
+
+	}
+
+
+
+
 }
 
-void CPU::store()
+int CPU::add_val_to_register(BYTE Vx, BYTE val)
 {
+	switch (Vx)
+	{
+	case 0x00:
+		registers.v0 += val;
+		break;
+	case 0x01:
+		registers.v1 += val;
+		break;
+	case 0x02:
+		registers.v2 += val;
+		break;
+	case 0x03:
+		registers.v3 += val;
+		break;
+	case 0x04:
+		registers.v4 += val;
+		break;
+	case 0x05:
+		registers.v5 += val;
+		break;
+	case 0x06:
+		registers.v6 += val;
+		break;
+	case 0x07:
+		registers.v7 += val;
+		break;
+	case 0x08:
+		registers.v8 += val;
+		break;
+	case 0x09:
+		registers.v9 += val;
+		break;
+	case 0x0A:
+		registers.va += val;
+		break;
+	case 0x0B:
+		registers.vb += val;
+		break;
+	case 0x0C:
+		registers.vc += val;
+		break;
+	case 0x0D:
+		registers.vd += val;
+		break;
+	case 0x0E:
+		registers.ve += val;
+		break;
+	default:
+		return -1;
+	}
+
+	return 0;
 }
 
-void CPU::add()
+int CPU::add_vx_to_I(BYTE Vx)
 {
-}
+	switch (Vx)
+	{
+	case 0x00:
+		registers.I += registers.v0;
+		break;
+	case 0x01:
+		registers.I += registers.v1;
+		break;
+	case 0x02:
+		registers.I += registers.v2;
+		break;
+	case 0x03:
+		registers.I += registers.v3;
+		break;
+	case 0x04:
+		registers.I += registers.v4;
+		break;
+	case 0x05:
+		registers.I += registers.v5;
+		break;
+	case 0x06:
+		registers.I += registers.v6;
+		break;
+	case 0x07:
+		registers.I += registers.v7;
+		break;
+	case 0x08:
+		registers.I += registers.v8;
+		break;
+	case 0x09:
+		registers.I += registers.v9;
+		break;
+	case 0x0A:
+		registers.I += registers.va;
+		break;
+	case 0x0B:
+		registers.I += registers.vb;
+		break;
+	case 0x0C:
+		registers.I += registers.vc;
+		break;
+	case 0x0D:
+		registers.I += registers.vd;
+		break;
+	case 0x0E:
+		registers.I += registers.ve;
+		break;
+	default:
+		return -1;
+		break;
+	}
 
-void CPU::sub()
-{
-}
+	return 0;
 
-void CPU::_or()
-{
-}
-
-void CPU::_and()
-{
-}
-
-void CPU::_xor()
-{
-}
-
-void CPU::_shift()
-{
 }
