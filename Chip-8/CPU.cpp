@@ -1,9 +1,7 @@
 #include "pch.h"
 #include "CPU.h"
 
-#include "stdio.h"
-#include "stdlib.h"
-#include "memory.h"
+
 
 // little Endiann to Big Endiann
 #define SWAP_UINT16(x) ( (WORD) (((x) >> 8) | ((x) << 8)))
@@ -78,6 +76,7 @@ int CPU::ReadRom(const char * RomPath)
 
 void CPU::main_loop()
 {
+	WORD dbg = 0;
 	while (1) {
 		// fetch & print opcodes
 		printf("OPCODE: %X \n", SWAP_UINT16(*this->pc));
@@ -101,8 +100,11 @@ void CPU::main_loop()
 			break;
 		case 2:
 			// 2NNN	Execute subroutine starting at address NNN
-			*this->sp = *(this->pc++);
-			*this->pc = *this->pc & 0x0FFF;
+			
+			//dbg = (((BYTE*)this->pc - this->Memory));
+			*this->sp = (WORD)    (((BYTE*)this->pc - this->Memory)) + 2;
+			this->sp++;
+			this->pc = (WORD *) (ext_lastThree(*this->pc) + this->Memory);
 			continue;
 			break;
 		case 3: // 3XNN	Skip the following instruction if the value of register VX equals 
@@ -125,43 +127,60 @@ void CPU::main_loop()
 			break;
 		case 8:
 			// 8XY0	Store the value of register VY in register VX
-			if (((char*)this->pc)[3] == 0) {
+			if (ext_fourth(*this->pc)  == 0) {
 				//store();
+				registers[ext_second(*this->pc)] = registers[ext_third(*this->pc)];
 			}
-			else if (((char*)this->pc)[3] == 1) {
+			else if (ext_fourth(*this->pc) == 1) {
 				// 8XY1	Set VX to VX OR VY
-
+				registers[ext_second(*this->pc)] = registers[ext_second(*this->pc)] | registers[ext_third(*this->pc)];
 			}
-			else if (((char*)this->pc)[3] == 2) {
+			else if (ext_fourth(*this->pc) == 2) {
 				// 8XY2	Set VX to VX AND VY
-
+				registers[ext_second(*this->pc)] = registers[ext_second(*this->pc)] & registers[ext_third(*this->pc)];
 			}
-			else if (((char*)this->pc)[3] == 3) {
+			else if (ext_fourth(*this->pc) == 3) {
 				// 8XY3	Set VX to VX XOR VY
-
+				registers[ext_second(*this->pc)] = registers[ext_second(*this->pc)] ^ registers[ext_third(*this->pc)];
 			}
-			else if (((char*)this->pc)[3] == 4) {
+			else if (ext_fourth(*this->pc) == 4) {
 				// 8XY4	Add the value of register VY to register VX
 				// Set VF to 01 if a carry occurs
 				//	Set VF to 00 if a carry does not occur
+				add_register_to_register(ext_second(*this->pc),
+					ext_third(*this->pc));
+
 			}
-			else if (((char*)this->pc)[3] == 5) {
+			else if (ext_fourth(*this->pc) == 5) {
 				// 8XY5	Subtract the value of register VY from register VX
 				// Set VF to 00 if a borrow occurs
-				//	Set VF to 01 if a borrow does not occur
+				// Set VF to 01 if a borrow does not occur
+				// Vx = Vx - Vy
+				_sub(ext_second(*this->pc),
+					ext_third(*this->pc),
+					1);
+
 			}
-			else if (((char*)this->pc)[3] == 6) {
+			else if (ext_fourth(*this->pc) == 6) {
 				// 8XY6	Store the value of register VY shifted right one bit in register VX
 				// Set register VF to the least significant bit prior to the shift
+				registers[0x0F] = ext_third(*this->pc) & 1;
+				registers[ext_second(*this->pc)] = registers[ext_third(*this->pc)] >> 1;
 			}
-			else if (((char*)this->pc)[3] == 7) {
+			else if (ext_fourth(*this->pc) == 7) {
 				// 8XY7	Set register VX to the value of VY minus VX
 				// Set VF to 00 if a borrow occurs
-				//	Set VF to 01 if a borrow does not occur
+				// Set VF to 01 if a borrow does not occur
+				// Vy = Vy - Vx
+				_sub(ext_second(*this->pc),
+					ext_third(*this->pc),
+					0);
 			}
-			else if (((char*)this->pc)[3] == 0xE) {
+			else if (ext_fourth(*this->pc) == 0xE) {
 				// 8XYE	Store the value of register VY shifted left one bit in register VX
 				// Set register VF to the most significant bit prior to the shift
+				registers[0x0F] = (ext_third(*this->pc) >> 7) & 1;
+				registers[ext_second(*this->pc)] = registers[ext_third(*this->pc)] << 1;
 			}
 			
 			break;
@@ -202,6 +221,11 @@ void CPU::main_loop()
 			// FX1E	Add the value stored in register VX to register I
 			if (ext_lastTwo(*this->pc) == 0x1E) {
 				add_vx_to_I(ext_second(*this->pc));
+			}
+			else if (ext_lastTwo(*this->pc) == 0x0A) {			// FX0A	Wait for a keypress and store the result in register VX
+				
+				registers[ext_second(*this->pc)] = kb._listen_key();
+
 			}
 
 			break;
@@ -244,6 +268,7 @@ void CPU::skip()
 		if (registers[Vx] == val) {
 			this->pc++;
 			this->pc++;
+			return;
 		}
 
 	}
@@ -253,6 +278,7 @@ void CPU::skip()
 		if (registers[Vx] != val) {
 			this->pc++;
 			this->pc++;
+			return;
 		}
 	}
 	else if (ext_first(*this->pc) == 0x05) {
@@ -261,10 +287,12 @@ void CPU::skip()
 		if (registers[Vx] == registers[Vy]) {
 			this->pc++;
 			this->pc++;
+			return;
 		}
 	}
 
-
+	this->pc++;
+	return;
 
 
 }
@@ -272,8 +300,48 @@ void CPU::skip()
 int CPU::add_val_to_register(BYTE Vx, BYTE val)
 {
 			//registers.v0 += val;
-			registers[Vx] += val;
-			return 0;
+			// note in case of Overflow save registers in bigger type and modulo 255 to get the correct values
+	WORD tmp_vx = 0;
+	WORD val = 0;
+	tmp_vx = registers[Vx];
+	tmp_vx += val;
+	registers[Vx] = tmp_vx % 256;
+	return 0;
+
+}
+
+int CPU::add_register_to_register(BYTE Vx, BYTE Vy)
+{
+	WORD tmp_vx = 0;
+	WORD val = 0;
+	tmp_vx = registers[Vx];
+	tmp_vx += val;
+	registers[0xF] = tmp_vx >> 8; // carry
+	registers[Vx] = tmp_vx % 256; // incase of overflow, we could use 0x00FF
+	return 0;
+	
+}
+
+void CPU::_sub(BYTE Vx, BYTE Vy, int Mode)
+{
+	signed short tmp= 0;
+	if (Mode) {
+		tmp = registers[Vx];
+		tmp = registers[Vx] - registers[Vy];
+		if (tmp <= 0) {
+			registers[0x0F] = 0;
+			registers[Vx] = tmp & 0x00FF;
+		}
+	}
+	else {
+		tmp = registers[Vy];
+		tmp = registers[Vy] - registers[Vx];
+		if (tmp <= 0) {
+			registers[0x0F] = 0;
+			registers[Vy] = tmp & 0x00FF;
+		}
+	}
+
 
 }
 

@@ -1,5 +1,11 @@
 #pragma once
 
+#include "stdio.h"
+#include "stdlib.h"
+#include "memory.h"
+
+#include "keyboard.h"
+
 typedef  unsigned char BYTE;
 typedef  unsigned short WORD;
 typedef struct {
@@ -37,10 +43,9 @@ private:
 	WORD * pc;
 	WORD stack[16];
 	WORD * sp;
-	BYTE registers[0xF];
+	BYTE registers[0x10];
 	WORD I;
-	//Registers registers;
-	BYTE key_pressed;
+	keyboard kb;
 
 	int ReadRom(const char* RomPath);
 	void main_loop();
@@ -59,7 +64,10 @@ private:
 	void store();
 	
 	int add_val_to_register(BYTE Vx, BYTE val);
-	void sub();
+	int add_register_to_register(BYTE Vx, BYTE Vy);
+
+
+	void _sub(BYTE Vx, BYTE Vy, int Mode); // if Mode = 1, Vx = Vx - Vy. else Vy = Vy - Vx
 
 	void _or();
 	void _and();
