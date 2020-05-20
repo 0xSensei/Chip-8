@@ -37,7 +37,9 @@ private:
 	WORD * pc;
 	WORD stack[16];
 	WORD * sp;
-	Registers registers;
+	BYTE registers[0xF];
+	WORD I;
+	//Registers registers;
 	BYTE key_pressed;
 
 	int ReadRom(const char* RomPath);

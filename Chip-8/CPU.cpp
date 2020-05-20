@@ -171,7 +171,7 @@ void CPU::main_loop()
 			break;
 		case 0xA:
 			// ANNN	Store memory address NNN in register I
-			this->registers.I = SWAP_UINT16(*this->pc) & 0x0FFF;
+			this->I = SWAP_UINT16(*this->pc) & 0x0FFF;
 			break;
 		case 0xB:
 			// BNNN	Jump to address NNN + V0
@@ -224,58 +224,7 @@ void CPU::main_loop()
 
 int CPU::set_appropriate_register(BYTE Vx, BYTE val)
 {
-	switch (Vx)
-	{
-	case 0x00:
-		registers.v0 = val;
-		break;
-	case 0x01:
-		registers.v1 = val;
-		break;
-	case 0x02:
-		registers.v2 = val;
-		break;
-	case 0x03:
-		registers.v3 = val;
-		break;
-	case 0x04:
-		registers.v4 = val;
-		break;
-	case 0x05:
-		registers.v5 = val;
-		break;
-	case 0x06:
-		registers.v6 = val;
-		break;
-	case 0x07:
-		registers.v7 = val;
-		break;
-	case 0x08:
-		registers.v8 = val;
-		break;
-	case 0x09:
-		registers.v9 = val;
-		break;
-	case 0x0A:
-		registers.va = val;
-		break;
-	case 0x0B:
-		registers.vb = val;
-		break;
-	case 0x0C:
-		registers.vc = val;
-		break;
-	case 0x0D:
-		registers.vd = val;
-		break;
-	case 0x0E:
-		registers.ve = val;
-		break;
-	default:
-		return -1;
-		break;
-	}
-
+	registers[Vx] = val;
 	return 0;
 }
 
@@ -292,62 +241,27 @@ void CPU::skip()
 	if (opcode == 0x03) {
 		Vx = ext_second(*this->pc);
 		val = ext_lastTwo(*this->pc);
-		switch (Vx)
-			{
-				case 0x00:
-					registers.v0 += val;
-					break;
-				case 0x01:
-					registers.v1 += val;
-					break;
-				case 0x02:
-					registers.v2 += val;
-					break;
-				case 0x03:
-					registers.v3 += val;
-					break;
-				case 0x04:
-					registers.v4 += val;
-					break;
-				case 0x05:
-					registers.v5 += val;
-					break;
-				case 0x06:
-					registers.v6 += val;
-					break;
-				case 0x07:
-					registers.v7 += val;
-					break;
-				case 0x08:
-					registers.v8 += val;
-					break;
-				case 0x09:
-					registers.v9 += val;
-					break;
-				case 0x0A:
-					registers.va += val;
-					break;
-				case 0x0B:
-					registers.vb += val;
-					break;
-				case 0x0C:
-					registers.vc += val;
-					break;
-				case 0x0D:
-					registers.vd += val;
-					break;
-				case 0x0E:
-					registers.ve += val;
-					break;
-				default:
-			}
+		if (registers[Vx] == val) {
+			this->pc++;
+			this->pc++;
+		}
 
 	}
 	else if (ext_first(*this->pc) == 0x04) {
-
+		Vx = ext_second(*this->pc);
+		val = ext_lastTwo(*this->pc);
+		if (registers[Vx] != val) {
+			this->pc++;
+			this->pc++;
+		}
 	}
 	else if (ext_first(*this->pc) == 0x05) {
-
+		Vx = ext_second(*this->pc);
+		Vy = ext_third(*this->pc);
+		if (registers[Vx] == registers[Vy]) {
+			this->pc++;
+			this->pc++;
+		}
 	}
 
 
@@ -357,114 +271,16 @@ void CPU::skip()
 
 int CPU::add_val_to_register(BYTE Vx, BYTE val)
 {
-	switch (Vx)
-	{
-	case 0x00:
-		registers.v0 += val;
-		break;
-	case 0x01:
-		registers.v1 += val;
-		break;
-	case 0x02:
-		registers.v2 += val;
-		break;
-	case 0x03:
-		registers.v3 += val;
-		break;
-	case 0x04:
-		registers.v4 += val;
-		break;
-	case 0x05:
-		registers.v5 += val;
-		break;
-	case 0x06:
-		registers.v6 += val;
-		break;
-	case 0x07:
-		registers.v7 += val;
-		break;
-	case 0x08:
-		registers.v8 += val;
-		break;
-	case 0x09:
-		registers.v9 += val;
-		break;
-	case 0x0A:
-		registers.va += val;
-		break;
-	case 0x0B:
-		registers.vb += val;
-		break;
-	case 0x0C:
-		registers.vc += val;
-		break;
-	case 0x0D:
-		registers.vd += val;
-		break;
-	case 0x0E:
-		registers.ve += val;
-		break;
-	default:
-		return -1;
-	}
+			//registers.v0 += val;
+			registers[Vx] += val;
+			return 0;
 
-	return 0;
 }
 
 int CPU::add_vx_to_I(BYTE Vx)
 {
-	switch (Vx)
-	{
-	case 0x00:
-		registers.I += registers.v0;
-		break;
-	case 0x01:
-		registers.I += registers.v1;
-		break;
-	case 0x02:
-		registers.I += registers.v2;
-		break;
-	case 0x03:
-		registers.I += registers.v3;
-		break;
-	case 0x04:
-		registers.I += registers.v4;
-		break;
-	case 0x05:
-		registers.I += registers.v5;
-		break;
-	case 0x06:
-		registers.I += registers.v6;
-		break;
-	case 0x07:
-		registers.I += registers.v7;
-		break;
-	case 0x08:
-		registers.I += registers.v8;
-		break;
-	case 0x09:
-		registers.I += registers.v9;
-		break;
-	case 0x0A:
-		registers.I += registers.va;
-		break;
-	case 0x0B:
-		registers.I += registers.vb;
-		break;
-	case 0x0C:
-		registers.I += registers.vc;
-		break;
-	case 0x0D:
-		registers.I += registers.vd;
-		break;
-	case 0x0E:
-		registers.I += registers.ve;
-		break;
-	default:
-		return -1;
-		break;
-	}
-
+	this->I += registers[Vx];
 	return 0;
+
 
 }
