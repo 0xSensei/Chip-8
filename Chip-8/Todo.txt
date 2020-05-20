@@ -5,5 +5,11 @@
 * change the registers into an array to make access more dynamic	** Done
 * test if not pressed the correct key (0-F) otherwise make a diffrent decision.
 
+* delay timer need to be decremented 
+* sound timers should be effiective too 
+
+
+* 			// FX29	Set I to the memory address of the sprite data corresponding to the hexadecimal digit stored in register VX
+
 Tests:
 * https://github.com/Rubenknex/Chip-8/blob/master/sctest.txt

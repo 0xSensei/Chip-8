@@ -23,7 +23,7 @@ CPU::CPU(const char * RomPath)
 {
 
 
-	
+	srand(0);
 
 	// clean up the state of registers and 
 	memset(this->Memory, 0, 4096);
@@ -31,7 +31,9 @@ CPU::CPU(const char * RomPath)
 
 	memset(&this->registers, 0, sizeof(Registers));
 
-
+	this->I = 0;
+	delay_timer = 0;
+	sound_timers = 0;
 
 
 	// Read Rom
@@ -90,6 +92,9 @@ void CPU::main_loop()
 			}
 			else {
 				//ret(); // 00EE	Return from a subroutine
+				this->pc = (WORD*) *this->sp;
+				this->sp--;
+				continue;
 			}
 			break;
 		case 1: // Jump absuloute
@@ -186,7 +191,7 @@ void CPU::main_loop()
 			break;
 		case 9:
 			// 9XY0	Skip the following instruction if the value of register VX is not equal to the value of register VY
-
+			skip();
 			break;
 		case 0xA:
 			// ANNN	Store memory address NNN in register I
@@ -194,9 +199,12 @@ void CPU::main_loop()
 			break;
 		case 0xB:
 			// BNNN	Jump to address NNN + V0
+			this->pc = (WORD*) this->Memory[ext_lastThree(*this->pc)];
 			break;
 		case 0xC:
 			// CXNN	Set VX to a random number with a mask of NN
+			this->registers[ext_second(*this->pc)] = rand() & ext_lastTwo(*this->pc);
+
 			break;
 		case 0xD:
 			// DXYN	Draw a sprite at position VX, VY with N bytes of sprite data starting at the address stored in I
@@ -207,27 +215,57 @@ void CPU::main_loop()
 			// EXA1	Skip the following instruction if the key corresponding to the hex value currently stored in register VX is not pressed
 			break;
 		case 0xF:
-			// FX07	Store the current value of the delay timer in register VX
-			// FX0A	Wait for a keypress and store the result in register VX
-			// FX15	Set the delay timer to the value of register VX
-			// FX18	Set the sound timer to the value of register VX
-			// FX29	Set I to the memory address of the sprite data corresponding to the hexadecimal digit stored in register VX
-			// FX33	Store the binary - coded decimal equivalent of the value stored in register VX at addresses I, I + 1, and I + 2
-			// FX55	Store the values of registers V0 to VX inclusive in memory starting at address I
-			// I is set to I + X + 1 after operation
-			// FX65	Fill registers V0 to VX inclusive with the values stored in memory starting at address I
-			// I is set to I + X + 1 after operation
+			
+			
 
 			// FX1E	Add the value stored in register VX to register I
 			if (ext_lastTwo(*this->pc) == 0x1E) {
 				add_vx_to_I(ext_second(*this->pc));
 			}
-			else if (ext_lastTwo(*this->pc) == 0x0A) {			// FX0A	Wait for a keypress and store the result in register VX
-				
+			// FX0A	Wait for a keypress and store the result in register VX	
+			else if (ext_lastTwo(*this->pc) == 0x0A) {		
 				registers[ext_second(*this->pc)] = kb._listen_key();
-
 			}
-
+			// FX15	Set the delay timer to the value of register VX
+			else if (ext_lastTwo(*this->pc) == 0x15) {			
+				this->delay_timer = ext_second(*this->pc);
+			}
+			// FX07	Store the current value of the delay timer in register 
+			else if (ext_lastTwo(*this->pc) == 0x07) {
+				registers[ext_second(*this->pc)] = this->delay_timer;
+			}
+			// FX18	Set the sound timer to the value of register VX
+			else if (ext_lastTwo(*this->pc) == 0x18) {
+				 this->sound_timers = registers[ext_second(*this->pc)];
+			}
+			// FX29	Set I to the memory address of the sprite data corresponding to the hexadecimal digit stored in register VX
+			else if (ext_lastTwo(*this->pc) == 0x29) {
+				this->I = registers[ext_second(*this->pc)];
+			}
+			// FX55	Store the values of registers V0 to VX inclusive in memory starting at address I
+			// I is set to I + X + 1 after operation
+			else if (ext_lastTwo(*this->pc) == 0x55) {
+				for (BYTE i = 0; i <= ext_second(*this->pc); i++, this->I++)
+				{
+					this->Memory[this->I] = registers[i];
+				}
+				this->I++;
+			}
+			// FX65	Fill registers V0 to VX inclusive with the values stored in memory starting at address I
+			// I is set to I + X + 1 after operation
+			else if (ext_lastTwo(*this->pc) == 0x65) {
+				for (BYTE i = 0; i <= ext_second(*this->pc); i++, this->I++)
+				{
+					registers[i] = this->Memory[this->I];
+				}
+				this->I++;
+			}
+			// FX33	Store the binary - coded decimal equivalent of the value stored in register VX at addresses I, I + 1, and I + 2
+			else if (ext_lastTwo(*this->pc) == 0x33) {
+				
+				_bcd(ext_second(*this->pc));
+				
+			}
 			break;
 		default:
 			break;
@@ -258,6 +296,8 @@ void CPU::skip()
 			// 3XNN	Skip the following instruction if the value of register VX equals 
 			// 4XNN	Skip the following instruction if the value of register VX is not equal to NN
 			// 5XY0	Skip the following instruction if the value of register VX is equal to the value of register VY
+			// 9XY0	Skip the following instruction if the value of register VX is not equal to the value of register VY
+
 	BYTE opcode = ext_first(*this->pc);
 	BYTE Vx;
 	BYTE Vy;
@@ -290,6 +330,15 @@ void CPU::skip()
 			return;
 		}
 	}
+	else if (ext_first(*this->pc) == 0x09) {
+		Vx = ext_second(*this->pc);
+		Vy = ext_third(*this->pc);
+		if (registers[Vx] != registers[Vy]) {
+			this->pc++;
+			this->pc++;
+			return;
+		}
+	}
 
 	this->pc++;
 	return;
@@ -302,7 +351,6 @@ int CPU::add_val_to_register(BYTE Vx, BYTE val)
 			//registers.v0 += val;
 			// note in case of Overflow save registers in bigger type and modulo 255 to get the correct values
 	WORD tmp_vx = 0;
-	WORD val = 0;
 	tmp_vx = registers[Vx];
 	tmp_vx += val;
 	registers[Vx] = tmp_vx % 256;
@@ -320,6 +368,17 @@ int CPU::add_register_to_register(BYTE Vx, BYTE Vy)
 	registers[Vx] = tmp_vx % 256; // incase of overflow, we could use 0x00FF
 	return 0;
 	
+}
+
+void CPU::_bcd(BYTE Vx)
+{
+	// FX33	Store the binary - coded decimal equivalent of the value stored in register VX at addresses I, I + 1, and I + 2
+	BYTE val = registers[Vx];
+	this->Memory[this->I] = val / 100;
+	this->Memory[this->I + 1] = (val / 10) % 10;
+	this->Memory[this->I + 2] = (val % 100) % 10;
+
+
 }
 
 void CPU::_sub(BYTE Vx, BYTE Vy, int Mode)

@@ -39,12 +39,20 @@ public:
 
 	
 private:
+	// memory alloc
 	BYTE Memory[4096];
-	WORD * pc;
 	WORD stack[16];
+	// psudo registers
+	WORD * pc;
 	WORD * sp;
-	BYTE registers[0x10];
 	WORD I;
+	// Registers
+	BYTE registers[0x10];
+	
+	// timers
+	BYTE delay_timer;
+	BYTE sound_timers;
+
 	keyboard kb;
 
 	int ReadRom(const char* RomPath);
@@ -66,7 +74,7 @@ private:
 	int add_val_to_register(BYTE Vx, BYTE val);
 	int add_register_to_register(BYTE Vx, BYTE Vy);
 
-
+	void _bcd(BYTE Vx);
 	void _sub(BYTE Vx, BYTE Vy, int Mode); // if Mode = 1, Vx = Vx - Vy. else Vy = Vy - Vx
 
 	void _or();
