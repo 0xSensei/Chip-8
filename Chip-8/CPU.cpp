@@ -46,6 +46,9 @@ CPU::CPU(const char * RomPath)
 	// set up needed registers
 	this->pc = (WORD *) &this->Memory[0x200];
 	this->sp = stack;
+
+
+	gr.init();
 	main_loop();
 }
 
@@ -55,7 +58,7 @@ CPU::~CPU()
 {
 }
 
-
+// FX29
 
 // open a ROM and Load it in memory and return the file size. if not return -1
 int CPU::ReadRom(const char * RomPath)
@@ -87,13 +90,14 @@ void CPU::main_loop()
 		switch (opcode)
 		{
 		case 0:
-			if (((char*)this->pc)[3] == 0) {
+			if (ext_fourth(*this->pc) == 0) {
 				//cls(); // 00E0	Clear the screen
 			}
 			else {
 				//ret(); // 00EE	Return from a subroutine
-				this->pc = (WORD*) *this->sp;
 				this->sp--;
+				this->pc = (WORD*) &this->Memory[*this->sp];
+				
 				continue;
 			}
 			break;
@@ -169,7 +173,7 @@ void CPU::main_loop()
 			else if (ext_fourth(*this->pc) == 6) {
 				// 8XY6	Store the value of register VY shifted right one bit in register VX
 				// Set register VF to the least significant bit prior to the shift
-				registers[0x0F] = ext_third(*this->pc) & 1;
+				registers[0x0F] = registers[ext_third(*this->pc)] & 1;
 				registers[ext_second(*this->pc)] = registers[ext_third(*this->pc)] >> 1;
 			}
 			else if (ext_fourth(*this->pc) == 7) {
@@ -184,7 +188,7 @@ void CPU::main_loop()
 			else if (ext_fourth(*this->pc) == 0xE) {
 				// 8XYE	Store the value of register VY shifted left one bit in register VX
 				// Set register VF to the most significant bit prior to the shift
-				registers[0x0F] = (ext_third(*this->pc) >> 7) & 1;
+				registers[0x0F] = (registers[ext_third(*this->pc)] >> 7) & 1;
 				registers[ext_second(*this->pc)] = registers[ext_third(*this->pc)] << 1;
 			}
 			
@@ -194,12 +198,12 @@ void CPU::main_loop()
 			skip();
 			break;
 		case 0xA:
-			// ANNN	Store memory address NNN in register I
+			// ANNN	Store memory address NNN in register I, fix into ext_lastThrea
 			this->I = SWAP_UINT16(*this->pc) & 0x0FFF;
 			break;
 		case 0xB:
 			// BNNN	Jump to address NNN + V0
-			this->pc = (WORD*) this->Memory[ext_lastThree(*this->pc)];
+			this->pc = (WORD*) this->Memory[ext_lastThree(*this->pc)] + registers[0];
 			break;
 		case 0xC:
 			// CXNN	Set VX to a random number with a mask of NN

@@ -5,7 +5,7 @@
 #include "memory.h"
 
 #include "keyboard.h"
-
+#include "GraphicsRender.h"
 typedef  unsigned char BYTE;
 typedef  unsigned short WORD;
 typedef struct {
@@ -54,6 +54,7 @@ private:
 	BYTE sound_timers;
 
 	keyboard kb;
+	GraphicsRender gr;
 
 	int ReadRom(const char* RomPath);
 	void main_loop();

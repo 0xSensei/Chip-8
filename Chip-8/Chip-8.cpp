@@ -7,11 +7,11 @@
 // Read ROM
 
 
-
+#undef main
 
 int main()
 {
 	CPU cpu("C:\\Users\\Asus\\source\\repos\\Chip-8\\ROMS\\BLITZ");
 
-	
+	return 1;
 }
